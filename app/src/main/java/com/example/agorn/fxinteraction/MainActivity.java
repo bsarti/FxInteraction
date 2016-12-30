@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText et_request;
     private TextView tv_output;
     private TextView tv_possibilities;
-    private String[] possibilities = {"FamocoID", "IMEI", "wifi on", "wifi off"};
+    private String[] possibilities = {"FamocoID", "IMEI", "wifi on", "wifi off",
+                                        "FMS sync", "restart NFC", "bluetooth on", "bluetooth off"};
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -48,9 +49,14 @@ public class MainActivity extends AppCompatActivity {
         tv_possibilities = (TextView) findViewById(R.id.tvpossibilities);
         String mypossibilities = "";
         for(int i=0; i<possibilities.length; i++){
-            mypossibilities = mypossibilities + ", " + possibilities[i];
+            if (i==0){
+                mypossibilities = mypossibilities + possibilities[i];
+            }
+            else{
+                mypossibilities = mypossibilities + ", " + possibilities[i];
+            }
         }
-        tv_possibilities.setText("Possible requests:" + mypossibilities);
+        tv_possibilities.setText("Possible requests: " + mypossibilities);
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -65,11 +71,28 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "IMEI":
                 tv_output.setText(get_IMEI());
+                break;
             case "wifi on":
                 Log.d(TAG, "Entered Wifi");
                 set_Wifi(true);
+                break;
             case "wifi off":
                 set_Wifi(false);
+                break;
+            case "FMS sync":
+                FMS_sync();
+                break;
+            case "restart NFC":
+                restart_nfc();
+                break;
+            case "bluetooth on":
+                set_bluetooth(true);
+                break;
+            case "bluetooth off":
+                set_bluetooth(false);
+                break;
+            case "restart device":
+                restart_device();
             default:
                 break;
         }
@@ -77,8 +100,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void set_bluetooth (boolean status_bluetooth){
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (status_bluetooth == true){
+            if (!mBluetoothAdapter.isEnabled()) {
+                mBluetoothAdapter.enable();
+            }
+        }
+        else {
         if (mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.disable();
+        }
         }
     }
 
@@ -92,6 +122,18 @@ public class MainActivity extends AppCompatActivity {
         return imei;
     }
 
+    public void restart_device(){
+        Intent i = new Intent("com.famoco.intent.action.REBOOT");
+        startService(i);
+    }
+
+    public void restart_nfc(){
+        Intent i = new Intent("com.famoco.intent.action.RESTART_NFC");
+        startActivity(i);
+        Toast toast = Toast.makeText(getApplicationContext(),"Restarting NFC",Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
     public void set_Wifi(boolean wifistatus){
         if (wifistatus == true) {
             Intent i = new Intent("com.famoco.intent.action.ENABLE_WIFI");
@@ -101,6 +143,14 @@ public class MainActivity extends AppCompatActivity {
             Intent i = new Intent("com.famoco.intent.action.DISABLE_WIFI");
             startActivity(i);
         }
+    }
+
+    public void FMS_sync(){
+        Intent i = new Intent("com.famoco.intent.action.FMS_SYNC");
+        sendBroadcast(i);
+        Toast toast = Toast.makeText(getApplicationContext(),"Sync Requested",Toast.LENGTH_SHORT);
+        toast.show();
+
     }
 
     /**
